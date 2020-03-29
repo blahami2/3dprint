@@ -1,3 +1,4 @@
+// SOURCE: https://www.thingiverse.com/thing:92518
 // ********************* PARAMETERS *********************
 // - edit to change size
 CARD_SIZE_LONG_EDGE = 165; // single card length ~ 91 
@@ -14,6 +15,7 @@ SEPARATOR_TOP_SPACE = 5; // space above the separators
 TITLE="BANG!";
 TITLE_FONT="Times New Roman";
 TITLE_ROTATION=0;
+$fn=100;
 
 // ********************* HELPER CONSTANTS *********************
 TAB_THICKNESS = WALL_THICKNESS / 2;
@@ -32,7 +34,7 @@ TAB_X = (CARD_LONG_EDGE/2) - (TAB_WIDTH/2) + TAB_SHIFT;
 
 // ********************* MAIN *********************
 box_bottom();
-create_separators();
+//create_separators();
 translate ([SPACE_BETWEEN_BOTTOM_AND_LID, 0, 0]) 
 box_top(TITLE, TITLE_FONT, TITLE_ROTATION);
 module create_separators(){
@@ -63,12 +65,14 @@ module box_bottom(){
 
         // - hole
         translate([WALL_THICKNESS,WALL_THICKNESS,WALL_THICKNESS]) cube ([CARD_LONG_EDGE - (WALL_THICKNESS*2),CARD_SHORT_EDGE - (WALL_THICKNESS*2),HEIGHT]);
+        
     }
     
     // bottom plate
     translate ([-WALL_THICKNESS-EXTRA_SPACE, -WALL_THICKNESS-EXTRA_SPACE, 0 ])
-        cube ([CARD_LONG_EDGE + WALL_WITH_SPACE*2, CARD_SHORT_EDGE + WALL_WITH_SPACE*2, WALL_THICKNESS]);
+        rounded_cube ([CARD_LONG_EDGE + WALL_WITH_SPACE*2, CARD_SHORT_EDGE + WALL_WITH_SPACE*2, WALL_THICKNESS], WALL_THICKNESS);
     
+    // tab wedges
     translate ([TAB_X, -TAB_THICKNESS, tab_wedge_z])
         tab_wedge(TAB_WIDTH, TAB_THICKNESS);
         
@@ -102,12 +106,13 @@ module tab_wedge(tab_width, tab_thickness){
 }
 
 module box_top(title, title_font, title_rotation=0){
+    x_length = LID_OUTSIDE_LONG_THICKNESS+ALL_EXTRA_SPACE;
+    y_length = LID_OUTSIDE_SHORT_THICKNESS+ALL_EXTRA_SPACE;
     // main body
     difference() 
     {
         // - base
-        cube ([LID_OUTSIDE_LONG_THICKNESS+ALL_EXTRA_SPACE, LID_OUTSIDE_SHORT_THICKNESS+ALL_EXTRA_SPACE, HEIGHT]);
-        
+        rounded_cube([LID_OUTSIDE_LONG_THICKNESS+ALL_EXTRA_SPACE, LID_OUTSIDE_SHORT_THICKNESS+ALL_EXTRA_SPACE, HEIGHT], WALL_THICKNESS);
         // - tab cutout
         tab_hole_width = TAB_WIDTH + 1; // + 1 space
         translate([WALL_WITH_SPACE + TAB_X - 0.5, WALL_THICKNESS/2, WALL_THICKNESS])
@@ -128,6 +133,77 @@ module box_top(title, title_font, title_rotation=0){
         rotate([90,180+title_rotation,0])
             linear_extrude(1)
                 text(title, size = font_height, font = title_font, halign = "center", valign = "bottom", $fn = 100);
+}
+
+module rounded_cube(size, radius){
+    
+    x = size[0];
+    y = size[1];
+    z = size[2];
+    d = radius * 2;
+    r = radius;
+    
+    difference(){
+        union(){
+            difference(){
+                // + body
+                cube ([x, y, z]);        
+                // - corners sides
+                translate([-1,-1,-1])
+                cube([r+1, r+1, z+2]);
+                translate([x-r, y-r, -1])
+                cube([r+1, r+1, z+2]);
+                translate([x-r, -1, -1])
+                cube([r+1, r+1, z+2]);
+                translate([-1, y-r, -1])
+                cube([r+1, r+1, z+2]);
+                
+                // - corners bottom
+                translate([-1,-1,-1])
+                cube([x+2, r+1, r+1]);
+                translate([-1,y-r,-1])
+                cube([x+2, r+1, r+1]);
+                translate([-1,-1,-1])
+                cube([r+1, y+2, r+1]);
+                translate([x-r,-1,-1])
+                cube([r+1, y+2, r+1]);
+            }
+            // + round corners sides
+            translate([r, r, r])
+            cylinder(h=z-r, d=d);
+            translate([x-r, r, r])
+            cylinder(h=z-r, d=d);
+            translate([x-r, y-r, r])
+            cylinder(h=z-r, d=d);
+            translate([r, y-r, r])
+            cylinder(h=z-r, d=d);
+            // + round corners bottom
+            translate([r, r, r])
+            rotate([0,90,0])
+            cylinder(h=x-r*2,d=d);
+            translate([r, y-r, r])
+            rotate([0,90,0])
+            cylinder(h=x-r*2,d=r*2);
+            translate([r, r, r])
+            rotate([-90,0,0])
+            cylinder(h=y-r*2,d=d);
+            translate([x-r, r, r])
+            rotate([-90,0,0])
+            cylinder(h=y-r*2,d=d);
+            // + vertices
+            translate([r, r, r])
+            sphere(r=r);
+            translate([r, y-r, r])
+            sphere(r=r);
+            translate([x-r, r, r])
+            sphere(r=r);
+            translate([x-r, y-r, r])
+            sphere(r=r);
+        }
+        // - top
+        translate([0,0,z])
+        cube([x, y, r]);
+    }
 }
 
 /**
