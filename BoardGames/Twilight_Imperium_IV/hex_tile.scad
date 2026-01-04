@@ -1,6 +1,6 @@
 function smallRadius(radius) = radius * sqrt(3)/2;
 
-module hexTile(diameter, height) {
+module hex(diameter, height) {
   linear_extrude(height=height) {
     circle(d=diameter, $fn=6);
   }
@@ -41,15 +41,17 @@ module connectorFemale(
             connector(height, connector_neck_width, connector_neck_length, connector_head_width, connector_head_length);
 }
 
-module hex(height, longest_width, inner_ring_width, outer_ring_width, ring_dig_height) {
+module hexTile(height, longest_width, inner_ring_width, outer_ring_width, ring_dig_height) {
+    // longest width + borders
+    full_width = longest_width + 2 * outer_ring_width;
     difference() {
-        hexTile(longest_width, height);
+        hex(full_width, height);
         // remove inner hex
         translate([0,0,-0.5])
-            hexTile(longest_width - 2*inner_ring_width, height*2);
+            hex(longest_width - 2 * inner_ring_width, height*2);
         // "dig" into the remaining hex 
         translate([0,0,height - ring_dig_height])
-            hexTile(longest_width - 2*outer_ring_width, height+1);  
+            hex(longest_width, height+1);  
     }
 }
 
@@ -65,7 +67,7 @@ module tileStand(
     connector_head_length, // length of the "head" part of the connector -> this will "click" inside
     connector_space,       // space between male and female connector
 ) {
-    rad = smallRadius(long_width/2);
+    rad = smallRadius((long_width+2*outer_ring_width)/2);
     connector_height = height - outer_ring_height;
     
     // used to join two neighboring parts (to create overlap)
@@ -116,7 +118,7 @@ module tileStand(
     fem_head_width = connector_head_width + connector_space * 2;
     
     difference() {
-        hex(height, longest_width, inner_ring_width, outer_ring_width, outer_ring_height);
+        hexTile(height, longest_width, inner_ring_width, outer_ring_width, outer_ring_height);
         // bottom right
         rotate([0,0,-30])
             translate([fem_length_shift,fem_width_shift,-overlap])
@@ -155,7 +157,7 @@ module holder(length, width) {
       cube([length,7,1.5]);
 }
 
-long_width = 118;
+long_width = 117.2;
 
 tileStand(3, long_width, 12, 1, 1.5, 10, 3, 16, 3, 0.2);
 
